@@ -8,8 +8,11 @@
 
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
 
+    @IBOutlet weak var topSearchBar: UISearchBar!
+    var filteredData: [Business]!
+    
     var businesses: [Business]!
     
     @IBOutlet weak var tableView: UITableView!
@@ -17,6 +20,8 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        topSearchBar.delegate = self
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -33,6 +38,9 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
                 print(business.address!)
             }
         })
+        
+        filteredData = businesses
+        self.tableView.reloadData()
 
 /* Example of Yelp search with more search options specified
         Business.searchWithTerm("Restaurants", sort: .Distance, categories: ["asianfusion", "burgers"], deals: true) { (businesses: [Business]!, error: NSError!) -> Void in
@@ -45,6 +53,34 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
         }
 */
     }
+    
+    func searchBar(topSearchBar: UISearchBar, textDidChange searchText:String) {
+        // When there is no text, filtered data should be the same as original data
+        
+        if searchText.isEmpty {
+            filteredData = businesses
+            print("searchText is empty")
+        } else {
+            print("searchText is " + searchText)
+            // The user has entered text into the search box
+            // Use the filter method to iterate over all items in the businesses array
+            // For each item, return true if the item should be included and false if the item should NOT be included
+            filteredData = businesses.filter({(dataItem: Business) -> Bool in
+                // If dataItem matches the searchText, return true to include it
+                //print(dataItem.name)
+                if dataItem.name!.rangeOfString(searchText, options: .CaseInsensitiveSearch) != nil {
+                    //print("returned true")
+                    return true
+                } else {
+                    //print("returned false")
+                    return false
+                }
+            })
+            
+        }
+        tableView.reloadData()
+    
+    }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -52,8 +88,8 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection selection: Int) -> Int {
-        if businesses != nil {
-            return businesses!.count
+        if filteredData != nil {
+            return filteredData!.count
         }
         else {
             return 0
@@ -63,7 +99,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("BusinessCell", forIndexPath: indexPath) as! BusinessCell
         
-        cell.business = businesses[indexPath.row]
+        cell.business = filteredData[indexPath.row]
         
         return cell
     }
